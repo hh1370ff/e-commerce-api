@@ -1,7 +1,8 @@
 import User from "../models/userModel.js";
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcrypt";
-
+import sendEmail from "../utils/sendEmail.js";
+import crypto from "crypto";
 // @desc Get all users
 // @route GET /users
 // @access Private
@@ -121,8 +122,6 @@ export const updateUser = asyncHandler(async (req, res) => {
     throw new Error("Duplicate username", 409);
   }
 
-
-
   user.firstName = firstName;
   user.userName = userName;
   user.lastName = lastName;
@@ -167,4 +166,59 @@ export const deleteUser = asyncHandler(async (req, res) => {
   const reply = `Username ${result.username} with ID ${result._id} deleted`;
 
   res.json(reply);
+});
+
+// @desc forgetPassword
+// @route POST /forgetPassword
+// @access Public
+export const forgotPassword = asyncHandler(async (req, res) => {
+  // Confirm data
+  const { email } = req.body;
+  if (!email) throw new Error("Email is required!", 400);
+
+  // Does the user exist?
+  const user = await User.findOne({ email });
+  if (!user) throw new Error("User not Found", 400);
+
+  const token = await user.generatePasswordResetToken();
+  await user.save();
+  const resetURL = `Hi, Please follow this link to reset Your Password. This link is valid till 10 minutes from now. <a href='http://localhost:3500/api/users/reset-password/${token}'>Click Here</>`;
+  const data = {
+    to: email,
+    text: "Hey User",
+    subject: "Forgot Password Link",
+    html: resetURL,
+  };
+  sendEmail(data);
+  res.json(token);
+});
+
+// @desc resetPassword
+// @route POST /resetPassword
+// @access Public
+export const resetPassword = asyncHandler(async (req, res) => {
+  // Confirm data
+  const { password } = req.body;
+  if (!password) throw new Error("password is required!", 400);
+
+  const { token } = req.params;
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+  // Does the user exist?
+  const user = await User.findOne({ passwordResetToken: hashedToken });
+  if (!user) throw new Error("unAuthorized!", 401);
+
+  if (new Date() >= user.passwordResetExpires)
+    throw new Error("UnAuthorized! Token is expired!", 401);
+
+  /* Hash password */
+  const hashedPwd = await bcrypt.hash(password, 10); // salt rounds
+
+  /* update user */
+  user.password = hashedPwd;
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+  await user.save();
+
+  res.json({ message: "Password is updated." });
 });

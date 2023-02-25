@@ -1,5 +1,6 @@
 import asyncHandler from "express-async-handler";
 import Product from "../models/productModel.js";
+import sendEmail from "../utils/sendEmail.js";
 
 // @desc Create new product
 // @route POST /createProduct
@@ -106,6 +107,7 @@ export const deleteProduct = asyncHandler(async (req, res) => {
 // @route GET /singleProduct
 // @access Private
 export const getSingleProduct = asyncHandler(async (req, res) => {
+  sendEmail();
   const { _id } = req.params;
 
   // Confirm data
