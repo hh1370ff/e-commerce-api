@@ -108,7 +108,8 @@ export const deleteBlog = asyncHandler(async (req, res) => {
 // @route POST /hitLike
 // @access Private
 export const hitLike = asyncHandler(async (req, res) => {
-  const { blogId, userId } = req.body;
+  const { blogId } = req.body;
+  const { _id: userId } = req.user;
 
   // Confirm data
   if (!blogId || !userId) {
@@ -163,7 +164,8 @@ export const hitLike = asyncHandler(async (req, res) => {
 // @route POST /hitDislike
 // @access Private
 export const hitDislike = asyncHandler(async (req, res) => {
-  const { blogId, userId } = req.body;
+  const { blogId } = req.body;
+  const { _id: userId } = req.user;
 
   // Confirm data
   if (!blogId || !userId) {

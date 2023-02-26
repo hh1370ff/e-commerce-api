@@ -1,5 +1,6 @@
 import asyncHandler from "express-async-handler";
 import Product from "../models/productModel.js";
+import User from "../models/userModel.js";
 import sendEmail from "../utils/sendEmail.js";
 
 // @desc Create new product
@@ -65,7 +66,7 @@ export const updateProduct = asyncHandler(async (req, res) => {
 
 // @desc Get all products
 // @route GET /getAllproducts
-// @access Private
+// @access public
 export const getAllProduct = asyncHandler(async (req, res) => {
   // Get all products from MongoDB
   const products = await Product.find().lean();
@@ -105,7 +106,7 @@ export const deleteProduct = asyncHandler(async (req, res) => {
 
 // @desc Get a singleProduct
 // @route GET /singleProduct
-// @access Private
+// @access public
 export const getSingleProduct = asyncHandler(async (req, res) => {
   sendEmail();
   const { _id } = req.params;
@@ -122,4 +123,110 @@ export const getSingleProduct = asyncHandler(async (req, res) => {
   }
 
   res.json(product);
+});
+
+// @desc add or remove from the wishlist
+// @route POST /addRemoveFormWishlist
+// @access private
+export const addRemoveFormWishlist = asyncHandler(async (req, res) => {
+  const { _id } = req.user;
+  const { prodId } = req.body;
+
+  if (!_id || !prodId) throw new Error("All fields are required!");
+
+  //confirm data
+  const user = await User.findById(_id);
+
+  const product = await Product.findById(prodId);
+  if (!user || !product) throw new Error("User or product not found", 400);
+
+  // check current wishlist
+  const itemExist = user.wishlist.find((itemId) => {
+    return prodId === itemId.toString();
+  });
+
+  //remove the product from the wishlist if the item exist and add it if not
+  if (itemExist === undefined) {
+    await user.updateOne({ $push: { wishlist: prodId } });
+  } else {
+    await user.updateOne({ $pull: { wishlist: prodId } });
+  }
+
+  let message;
+  if (itemExist === undefined) {
+    message = "Item is added to the wishlist successfully";
+  } else {
+    message = "Item is removed from the wishlist successfully";
+  }
+  res.status(200).json({ message });
+});
+
+// @desc rate a product
+// @route POST /rateProduct
+// @access private
+export const rateProduct = asyncHandler(async (req, res) => {
+  const { star, comment, prodId } = req.body;
+
+  /* confirm data */
+  if (!star || !comment || !prodId)
+    throw new Error("All fields are required", 400);
+
+  const user = req.user;
+
+  /* confirm product */
+  let product = await Product.findById(prodId);
+  if (!product) throw new Error("Product not found!", 400);
+
+  /* finding the previous rate if exist */
+  const previousRate = product.ratings.find(
+    (rate) => rate.postedBy.toString() === user._id.toString()
+  );
+  console.log(
+    "🚀 ~ file: productController.js:176 ~ rateProduct ~ previousRate:",
+    previousRate
+  );
+
+  let message;
+  if (previousRate === undefined) {
+    // add the new rating
+
+    product = await product.updateOne({
+      $push: {
+        ratings: {
+          star,
+          comment,
+          postedBy: user.id,
+        },
+      },
+    });
+    message = "New rating is added";
+  } else {
+    // update the rating
+
+    product = await Product.updateOne(
+      {
+        ratings: { $elemMatch: previousRate },
+      },
+      {
+        $set: {
+          "ratings.$.star": star,
+          "ratings.$.comment": comment,
+        },
+      }
+    );
+    message = "New rating is edited";
+  }
+
+  /* update total rating */
+  product = await Product.findById(prodId);
+  const averageRating = product.ratings.reduce(
+    (av, rate, index) => (av * index + rate.star) / (index + 1),
+    0
+  );
+
+  await product.updateOne({
+    totalRating: averageRating.toFixed(1),
+  });
+
+  res.status(200).json({ message });
 });

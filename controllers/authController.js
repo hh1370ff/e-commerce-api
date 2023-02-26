@@ -22,7 +22,6 @@ export const login = asyncHandler(async (req, res) => {
 
   if (!match) throw new Error("Unauthorized", 401);
 
-  const { useName, roles } = foundUser;
   const accessToken = jwt.sign(
     {
       userInfo: {
@@ -31,7 +30,7 @@ export const login = asyncHandler(async (req, res) => {
       },
     },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: "15m" }
+    { expiresIn: "7d" }
   );
 
   const refreshToken = jwt.sign(
@@ -49,7 +48,11 @@ export const login = asyncHandler(async (req, res) => {
   });
 
   // Send accessToken containing userName and roles
-  res.json({ accessToken, userName, roles });
+  res.json({
+    accessToken,
+    userName: foundUser.userName,
+    roles: foundUser.roles,
+  });
 });
 
 // @desc Refresh
@@ -57,7 +60,7 @@ export const login = asyncHandler(async (req, res) => {
 // @access Public - because access token has expired
 export const refresh = (req, res) => {
   const cookies = req.cookies;
-  console.log("🚀 ~ file: authController.js:60 ~ refresh ~ cookies:", cookies)
+  console.log("🚀 ~ file: authController.js:60 ~ refresh ~ cookies:", cookies);
 
   if (!cookies?.jwt) throw new Error("Unauthorized", 401);
 
@@ -84,7 +87,7 @@ export const refresh = (req, res) => {
           },
         },
         process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: "15m" }
+        { expiresIn: "7d" }
       );
 
       res.json({ accessToken, userName, roles });

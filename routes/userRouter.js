@@ -8,14 +8,19 @@ import {
   updateUser,
   resetPassword,
 } from "../controllers/userController.js";
-import { isAdmin, verifyJWT } from "../middleware/verifyJWT.js";
+import { verifyJWT, isAdmin } from "../middleware/verifyJWT.js";
 const userRouter = express.Router();
+/* admin routes */
+userRouter.route("/getAllUsers").get(verifyJWT, isAdmin, getAllUsers);
 
+/* user routes */
+userRouter.route("/getSingleUser").get(verifyJWT, getSingleUser);
+userRouter.route("/deleteUser").delete(verifyJWT, deleteUser);
+userRouter.route("/updateUser").put(verifyJWT, updateUser);
+
+/* public route */
 userRouter.route("/register").post(createUser);
-userRouter.route("/getAllUsers").get(getAllUsers);
-userRouter.route("/getSingleUser/:_id").get(getSingleUser);
-userRouter.route("/deleteUser").delete(verifyJWT, isAdmin, deleteUser);
-userRouter.route("/updateUser").put(updateUser);
+
 userRouter.route("/forgotPassword").post(forgotPassword);
 userRouter.route("/restPassword/:token").post(resetPassword);
 

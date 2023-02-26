@@ -8,14 +8,20 @@ import {
   hitLike,
   hitDislike,
 } from "../controllers/blogController.js";
+import { verifyJWT, isAdmin } from "../middleware/verifyJWT.js";
 const blogRouter = express.Router();
 
-blogRouter.route("/createBlog").post(createBlog);
-blogRouter.route("/updateBlog").put(updateBlog);
+/* admin routs */
+blogRouter.route("/createBlog").post(verifyJWT, isAdmin, createBlog);
+blogRouter.route("/updateBlog").put(verifyJWT, isAdmin, updateBlog);
+blogRouter.route("/deleteBlog").delete(verifyJWT, isAdmin, deleteBlog);
+
+/* user routes */
+blogRouter.route("/hitLike").post(verifyJWT, hitLike);
+blogRouter.route("/hitDislike").post(verifyJWT, hitDislike);
+
+/* public routes */
 blogRouter.route("/getAllBlogs").get(getAllBlogs);
 blogRouter.route("/getSingleBlog/:_id").get(getSingleBlog);
-blogRouter.route("/deleteBlog").delete(deleteBlog);
-blogRouter.route("/hitLike").post(hitLike);
-blogRouter.route("/hitDislike").post(hitDislike);
 
 export default blogRouter;
