@@ -8,6 +8,7 @@ import notFound from "./middleware/notFound.js";
 import authRouter from "./routes/authRouter.js";
 import productRouter from "./routes/productRouter.js";
 import blogRouter from "./routes/blogRouter.js";
+import productCategoryRouter from "./routes/productCategoryRouter.js";
 const app = express();
 
 dotenv.config();
@@ -21,6 +22,7 @@ app.use("/api/users", userRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/products", productRouter);
 app.use("/api/blogs", blogRouter);
+app.use("/api/productCategory", productCategoryRouter);
 
 app.use(notFound);
 app.use(errorHandler);
