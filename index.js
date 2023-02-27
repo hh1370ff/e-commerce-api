@@ -10,6 +10,7 @@ import productRouter from "./routes/productRouter.js";
 import blogRouter from "./routes/blogRouter.js";
 import productCategoryRouter from "./routes/productCategoryRouter.js";
 import enquiryRouter from "./routes/enquiryRouter.js";
+import couponRouter from "./routes/couponRouter.js";
 const app = express();
 
 dotenv.config();
@@ -25,6 +26,7 @@ app.use("/api/products", productRouter);
 app.use("/api/blogs", blogRouter);
 app.use("/api/productCategory", productCategoryRouter);
 app.use("/api/enquiry", enquiryRouter);
+app.use("/api/coupon", couponRouter);
 
 app.use(notFound);
 app.use(errorHandler);
