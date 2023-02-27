@@ -2,6 +2,8 @@ import User from "../models/userModel.js";
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import HttpError from "../utils/extendedError.js";
+
 // @desc Login
 // @route POST /auth
 // @access Public
@@ -9,18 +11,18 @@ export const login = asyncHandler(async (req, res) => {
   const { userName, password } = req.body;
 
   if (!userName || !password) {
-    throw new Error("All fields are required", 400);
+    throw new HttpError("All fields are required", 400);
   }
 
   const foundUser = await User.findOne({ userName }).exec();
 
   if (!foundUser) {
-    throw new Error("Unauthorized", 401);
+    throw new HttpError("Unauthorized", 401);
   }
 
   const match = await bcrypt.compare(password, foundUser.password);
 
-  if (!match) throw new Error("Unauthorized", 401);
+  if (!match) throw new HttpError("Unauthorized", 401);
 
   const accessToken = jwt.sign(
     {
@@ -62,7 +64,7 @@ export const refresh = (req, res) => {
   const cookies = req.cookies;
   console.log("🚀 ~ file: authController.js:60 ~ refresh ~ cookies:", cookies);
 
-  if (!cookies?.jwt) throw new Error("Unauthorized", 401);
+  if (!cookies?.jwt) throw new HttpError("Unauthorized", 401);
 
   const refreshToken = cookies.jwt;
 
@@ -70,13 +72,13 @@ export const refresh = (req, res) => {
     refreshToken,
     process.env.REFRESH_TOKEN_SECRET,
     async (err, decoded) => {
-      if (err) throw new Error("Forbidden", 403);
+      if (err) throw new HttpError("Forbidden", 403);
 
       const foundUser = await User.findOne({
         userName: decoded.userName,
       }).exec();
 
-      if (!foundUser) throw new Error("Unauthorized", 401);
+      if (!foundUser) throw new HttpError("Unauthorized", 401);
 
       const { userName, roles } = foundUser;
       const accessToken = jwt.sign(

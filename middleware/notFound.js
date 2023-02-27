@@ -1,5 +1,7 @@
+import HttpError from "../utils/extendedError.js";
+
 const notFound = (req, res, next) => {
-  const error = new Error(`Not found ${req.originalUrl}`, 404);
+  const error = new HttpError(`Not found ${req.originalUrl}`, 404);
   next(error);
 };
 

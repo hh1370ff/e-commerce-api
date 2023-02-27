@@ -1,5 +1,6 @@
 import Coupon from "../models/couponModel.js";
 import asyncHandler from "express-async-handler";
+import HttpError from "../utils/extendedError.js";
 
 // @desc create a new coupon
 // @route POST /createCoupon
@@ -8,11 +9,9 @@ export const createCoupon = asyncHandler(async (req, res) => {
   /* confirm data */
   const { name, expiry, discount } = req.body;
   if (!name || !expiry || !discount)
-    throw new Error("All fields are required", 400);
+    throw new HttpError("All fields are required", 400);
 
   const coupon = await Coupon.create(req.body);
-  /* check the validity of data */
-  if (!coupon) throw new Error("Invalid information", 400);
 
   res.json(coupon);
 });
@@ -22,7 +21,7 @@ export const createCoupon = asyncHandler(async (req, res) => {
 // @access Private
 export const getAllCoupons = asyncHandler(async (req, res) => {
   const coupons = await Coupon.find();
-  if (coupons.length === 0) throw new Error("No coupon found!", 400);
+  if (coupons.length === 0) throw new HttpError("No coupon found!", 400);
   res.json(coupons);
 });
 
@@ -34,15 +33,19 @@ export const updateCoupon = asyncHandler(async (req, res) => {
 
   const { _id, name, expiry, discount } = req.body;
   if (!name || !expiry || !discount || !_id)
-    throw new Error("All fields are required", 400);
+    throw new HttpError("All fields are required", 400);
 
-  /* check the validity of data */
+  /* check coupon */
   const coupon = await Coupon.findById(_id);
-  if (!coupon) throw new Error("Coupon not found", 400);
+  if (!coupon) throw new HttpError("Coupon not found", 400);
 
-  await coupon.updateOne(req.body);
+  const updatedCoupon = await Coupon.findByIdAndUpdate(
+    coupon._id,
+    { $set: req.body },
+    { new: true }
+  );
 
-  res.json({ message: "coupon is updated" });
+  res.json(updatedCoupon);
 });
 
 // @desc delete coupon
@@ -51,11 +54,11 @@ export const updateCoupon = asyncHandler(async (req, res) => {
 export const deleteCoupon = asyncHandler(async (req, res) => {
   /* confirm data */
   const { _id } = req.body;
-  if (!_id) throw new Error("all fields are required!", 400);
+  if (!_id) throw new HttpError("all fields are required!", 400);
 
-  /* check the validity of data */
+  /* check coupon */
   const coupon = await Coupon.findById(_id);
-  if (!coupon) throw new Error("Coupon not found!", 400);
+  if (!coupon) throw new HttpError("Coupon not found!", 400);
 
   await coupon.deleteOne();
   res.json({ message: "coupon is deleted" });
@@ -66,7 +69,9 @@ export const deleteCoupon = asyncHandler(async (req, res) => {
 // @access Private
 export const getSingleCoupon = asyncHandler(async (req, res) => {
   const { _id } = req.params;
+
+  /* check coupon */
   const coupon = await Coupon.findById(_id);
-  if (!coupon) throw new Error("Coupon not found!", 400);
+  if (!coupon) throw new HttpError("Coupon not found!", 400);
   res.json(coupon);
 });

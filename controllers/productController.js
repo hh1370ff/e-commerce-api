@@ -2,66 +2,50 @@ import asyncHandler from "express-async-handler";
 import Product from "../models/productModel.js";
 import User from "../models/userModel.js";
 import sendEmail from "../utils/sendEmail.js";
+import HttpError from "../utils/extendedError.js";
 
 // @desc Create new product
 // @route POST /createProduct
 // @access Private
 export const createProduct = asyncHandler(async (req, res) => {
-  const { title, slug, description, price, category, brand, quantity } =
-    req.body;
+  const { title, slug, description, price, brand, quantity } = req.body;
 
   // Confirm data
-  if (
-    !title ||
-    !slug ||
-    !description ||
-    !price ||
-    !category ||
-    !brand ||
-    !quantity
-  )
-    throw new Error("All fields are required", 400);
+  if (!title || !slug || !description || !price || !brand || !quantity)
+    throw new HttpError("All fields are required", 400);
 
   const productObject = { ...req.body };
 
   // Create and store new product
   const product = await Product.create(productObject);
 
-  if (product)
-    res.status(201).json({ message: `New product ${title} created` });
-  else throw new Error("Invalid product data received", 400);
+  res.status(201).json({ message: `New product ${title} created` });
 });
 
 // @desc Update a product
 // @route PATCH /updateProduct
 // @access Private
 export const updateProduct = asyncHandler(async (req, res) => {
-  const { _id, title, slug, description, price, category, brand, quantity } =
-    req.body;
+  const { _id, title, slug, description, price, brand, quantity } = req.body;
 
   // Confirm data
-  if (
-    !_id ||
-    !title ||
-    !slug ||
-    !description ||
-    !price ||
-    !category ||
-    !brand ||
-    !quantity
-  )
-    throw new Error("All fields are required", 400);
+  if (!_id || !title || !slug || !description || !price || !brand || !quantity)
+    throw new HttpError("All fields are required", 400);
 
   // Does the product exist to update?
   const product = await Product.findById(_id).exec();
 
   if (!product) {
-    throw new Error("Product not found", 400);
+    throw new HttpError("Product not found", 400);
   }
 
-  const updated = await product.update({ ...req.body });
+  const updatedProduct = await Product.findByIdAndUpdate(
+    product._id,
+    { $set: req.body },
+    { new: true }
+  );
 
-  res.json({ message: `Item is updated` });
+  res.json(updatedProduct);
 });
 
 // @desc Get all products
@@ -73,7 +57,7 @@ export const getAllProduct = asyncHandler(async (req, res) => {
 
   // If no products
   if (!products?.length) {
-    throw new Error("No products found", 400);
+    throw new HttpError("No products found", 400);
   }
 
   res.json(products);
@@ -87,14 +71,14 @@ export const deleteProduct = asyncHandler(async (req, res) => {
 
   // Confirm data
   if (!_id) {
-    throw new Error("Product ID Required", 400);
+    throw new HttpError("Product ID Required", 400);
   }
 
   // Does the product exist to delete?
   const product = await Product.findById(_id).exec();
 
   if (!product) {
-    throw new Error("Product not found", 400);
+    throw new HttpError("Product not found", 400);
   }
 
   const result = await product.deleteOne();
@@ -112,14 +96,14 @@ export const getSingleProduct = asyncHandler(async (req, res) => {
   const { _id } = req.params;
 
   // Confirm data
-  if (!_id) throw new Error("ID is required", 400);
+  if (!_id) throw new HttpError("ID is required", 400);
 
   // Get single product from MongoDB
   const product = await Product.findById(_id).lean();
 
   // If no product
   if (!product) {
-    throw new Error("No products found", 400);
+    throw new HttpError("No products found", 400);
   }
 
   res.json(product);
@@ -132,13 +116,13 @@ export const addRemoveFormWishlist = asyncHandler(async (req, res) => {
   const { _id } = req.user;
   const { prodId } = req.body;
 
-  if (!_id || !prodId) throw new Error("All fields are required!");
+  if (!_id || !prodId) throw new HttpError("All fields are required!");
 
   //confirm data
   const user = await User.findById(_id);
 
   const product = await Product.findById(prodId);
-  if (!user || !product) throw new Error("User or product not found", 400);
+  if (!user || !product) throw new HttpError("User or product not found", 400);
 
   // check current wishlist
   const itemExist = user.wishlist.find((itemId) => {
@@ -169,13 +153,13 @@ export const rateProduct = asyncHandler(async (req, res) => {
 
   /* confirm data */
   if (!star || !comment || !prodId)
-    throw new Error("All fields are required", 400);
+    throw new HttpError("All fields are required", 400);
 
   const user = req.user;
 
   /* confirm product */
   let product = await Product.findById(prodId);
-  if (!product) throw new Error("Product not found!", 400);
+  if (!product) throw new HttpError("Product not found!", 400);
 
   /* finding the previous rate if exist */
   const previousRate = product.ratings.find(

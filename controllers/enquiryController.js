@@ -1,12 +1,17 @@
 import Enquiry from "../models/enquiryModel.js";
 import asyncHandler from "express-async-handler";
+import HttpError from "../utils/extendedError.js";
 
 // @desc create enquiry
 // @route POST /createEnquiry
 // @access public
 export const createEnquiry = asyncHandler(async (req, res) => {
+  /* confirm data */
+  const { name, email, mobile, comment } = req.body;
+  if (!name || !email || !mobile || !comment)
+    throw new HttpError("All fields are required");
+
   const newEnquiry = await Enquiry.create(req.body);
-  if (!newEnquiry) throw new Error("Invalid information!", 400);
   res.json(newEnquiry);
 });
 
@@ -15,15 +20,21 @@ export const createEnquiry = asyncHandler(async (req, res) => {
 // @access private
 export const updateEnquiry = asyncHandler(async (req, res) => {
   /* confirm data */
-  const { _id } = req.body;
-  if (!_id) throw new Error("All fields are required!", 400);
+  const { _id, name, email, mobile, comment } = req.body;
+  if (!name || !email || !mobile || !comment || !_id)
+    throw new HttpError("All fields are required");
 
   /* check enquiry */
   const enquiry = await Enquiry.findById(_id);
-  if (!enquiry) throw new Error("enquiry not found!", 400);
+  if (!enquiry) throw new HttpError("enquiry not found!", 400);
 
-  await enquiry.updateOne(req.body, { new: true });
-  res.json({ message: "enquiry is updated" });
+  const updatedEnquiry = await Enquiry.findByIdAndUpdate(
+    enquiry._id,
+    { $set: req.body },
+    { new: true }
+  );
+
+  res.json(updatedEnquiry);
 });
 
 // @desc delete enquiry
@@ -32,10 +43,10 @@ export const updateEnquiry = asyncHandler(async (req, res) => {
 export const deleteEnquiry = asyncHandler(async (req, res) => {
   /* confirm data */
   const { _id } = req.body;
-  if (!_id) throw new Error("All fields are required!", 400);
+  if (!_id) throw new HttpError("All fields are required!", 400);
   /* check enquiry */
   const enquiry = await Enquiry.findById(_id);
-  if (!enquiry) throw new Error("enquiry not found!", 400);
+  if (!enquiry) throw new HttpError("enquiry not found!", 400);
 
   await enquiry.deleteOne();
   res.json({ message: "enquiry is deleted" });
@@ -49,7 +60,7 @@ export const getSingleEnquiry = asyncHandler(async (req, res) => {
 
   /* check enquiry */
   const enquiry = await Enquiry.findById(_id);
-  if (!enquiry) throw new Error("enquiry not found", 400);
+  if (!enquiry) throw new HttpError("enquiry not found", 400);
 
   res.json(enquiry);
 });
@@ -61,7 +72,8 @@ export const getAllEnquiries = asyncHandler(async (req, res) => {
   const getallEnquiry = await Enquiry.find();
 
   /* check enquiries */
-  if (getallEnquiry.length === 0) throw new Error("Enquiries not found!", 400);
+  if (getallEnquiry.length === 0)
+    throw new HttpError("Enquiries not found!", 400);
 
   res.json(getallEnquiry);
 });

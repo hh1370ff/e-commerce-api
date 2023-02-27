@@ -1,6 +1,7 @@
 import Blog from "../models/blogModel.js";
 import asyncHandler from "express-async-handler";
 import User from "../models/userModel.js";
+import HttpError from "../utils/extendedError.js";
 
 // @desc Create new blog
 // @route POST /createBlog
@@ -10,13 +11,11 @@ export const createBlog = asyncHandler(async (req, res) => {
 
   // Confirm data
   if (!title || !description || !category)
-    throw new Error("All fields are required", 400);
+    throw new HttpError("All fields are required", 400);
 
   // Create and store new blog
   const newBlog = await Blog.create(req.body);
-  if (newBlog)
-    res.status(201).json({ message: `New newBlog ${newBlog.title} created` });
-  else throw new Error("Invalid newBlog data received", 400);
+  res.status(201).json({ message: `New newBlog ${newBlog.title} created` });
 });
 
 // @desc Update a blog
@@ -27,18 +26,22 @@ export const updateBlog = asyncHandler(async (req, res) => {
 
   // Confirm data
   if (!_id || !title || !description || !category)
-    throw new Error("All fields are required", 400);
+    throw new HttpError("All fields are required", 400);
 
   // Does the blog exist to update?
   const blog = await Blog.findById(_id).exec();
 
   if (!blog) {
-    throw new Error("Blog not found", 400);
+    throw new HttpError("Blog not found", 400);
   }
 
-  const updatedBlog = await blog.update(req.body);
-  if (!updatedBlog) throw new Error("Invalid blog data is received!", 400);
-  res.json({ message: "Blog updated successfully." });
+  const updatedBlog = await Blog.findByIdAndUpdate(
+    blog._id,
+    { $set: req.body },
+    { new: true }
+  );
+
+  res.json(updatedBlog);
 });
 
 // @desc Get all blogs
@@ -49,7 +52,7 @@ export const getAllBlogs = asyncHandler(async (req, res) => {
 
   // If no blogs
   if (!blogs?.length) {
-    throw new Error("No blogs found", 400);
+    throw new HttpError("No blogs found", 400);
   }
 
   res.json(blogs);
@@ -62,14 +65,14 @@ export const getSingleBlog = asyncHandler(async (req, res) => {
   const { _id } = req.params;
 
   // Confirm data
-  if (!_id) throw new Error("ID is required", 400);
+  if (!_id) throw new HttpError("ID is required", 400);
 
   // Get single blog from MongoDB
   let blog = await Blog.findById(_id);
 
   // If no blog
   if (!blog) {
-    throw new Error("No blogs found", 400);
+    throw new HttpError("No blogs found", 400);
   }
 
   blog = await Blog.populate(blog, { path: "likes dislikes" });
@@ -87,14 +90,14 @@ export const deleteBlog = asyncHandler(async (req, res) => {
 
   // Confirm data
   if (!_id) {
-    throw new Error("User ID Required", 400);
+    throw new HttpError("User ID Required", 400);
   }
 
   // Does the blog exist to delete?
   const blog = await Blog.findById(_id).exec();
 
   if (!blog) {
-    throw new Error("Blog not found", 400);
+    throw new HttpError("Blog not found", 400);
   }
 
   const result = await blog.deleteOne();
@@ -113,13 +116,13 @@ export const hitLike = asyncHandler(async (req, res) => {
 
   // Confirm data
   if (!blogId || !userId) {
-    throw new Error("All fields are required", 400);
+    throw new HttpError("All fields are required", 400);
   }
 
   // check user and blog
   const blog = await Blog.findById(blogId);
   const user = await User.findById(userId);
-  if (!blog || !user) throw new Error("User or Blog does not exist!", 400);
+  if (!blog || !user) throw new HttpError("User or Blog does not exist!", 400);
 
   // check whether user already liked or disliked the blog
   const alreadyDisliked = blog?.dislikes?.find(
@@ -130,7 +133,7 @@ export const hitLike = asyncHandler(async (req, res) => {
   );
 
   //if liked
-  if (alreadyLiked) throw new Error("You already liked this blog", 409);
+  if (alreadyLiked) throw new HttpError("You already liked this blog", 409);
 
   // if disliked
   if (alreadyDisliked) {
@@ -169,13 +172,13 @@ export const hitDislike = asyncHandler(async (req, res) => {
 
   // Confirm data
   if (!blogId || !userId) {
-    throw new Error("All fields are required", 400);
+    throw new HttpError("All fields are required", 400);
   }
 
   // check user and blog
   const blog = await Blog.findById(blogId);
   const user = await User.findById(userId);
-  if (!blog || !user) throw new Error("User or Blog does not exist!", 400);
+  if (!blog || !user) throw new HttpError("User or Blog does not exist!", 400);
 
   // check whether user already liked or disliked the blog
   const alreadyDisliked = blog?.dislikes?.find(
@@ -186,7 +189,8 @@ export const hitDislike = asyncHandler(async (req, res) => {
   );
 
   // if disliked
-  if (alreadyDisliked) throw new Error("You already disliked this blog", 409);
+  if (alreadyDisliked)
+    throw new HttpError("You already disliked this blog", 409);
 
   //if liked
   if (alreadyLiked) {
