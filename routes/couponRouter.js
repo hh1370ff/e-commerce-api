@@ -5,6 +5,7 @@ import {
   updateCoupon,
   deleteCoupon,
   getSingleCoupon,
+  applyCoupon,
 } from "../controllers/couponController.js";
 import { verifyJWT, isAdmin } from "../middleware/verifyJWT.js";
 const couponRouter = express.Router();
@@ -19,5 +20,6 @@ couponRouter
   .get(verifyJWT, isAdmin, getSingleCoupon);
 
 /* user routes */
+couponRouter.route("/applyCoupon").post(verifyJWT, applyCoupon);
 
 export default couponRouter;

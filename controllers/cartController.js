@@ -35,10 +35,18 @@ export const createCart = asyncHandler(async (req, res) => {
     })
   );
 
-  const cart = await Cart.create({ products, totalPrice, orderBy: user._id });
+  const cart = await Cart.create({
+    products,
+    totalPrice,
+    orderBy: user._id,
+    totalPriceAfterDiscount: totalPrice,
+  });
   res.json(cart);
 });
 
+// @desc get cart
+// @route GET /getCart
+// @access public
 export const getCart = asyncHandler(async (req, res) => {
   const { _id } = req.user;
   const cart = await Cart.findOne({ orderBy: _id }).populate("products");
@@ -46,6 +54,9 @@ export const getCart = asyncHandler(async (req, res) => {
   res.json(cart);
 });
 
+// @desc delete cart
+// @route DELETE /deleteCart
+// @access public
 export const deleteCart = asyncHandler(async (req, res) => {
   const user = req.user;
 

@@ -13,6 +13,7 @@ import enquiryRouter from "./routes/enquiryRouter.js";
 import couponRouter from "./routes/couponRouter.js";
 import colorRouter from "./routes/colorRouter.js";
 import cartRouter from "./routes/cartRouter.js";
+import orderRouter from "./routes/orderRouter.js";
 const app = express();
 
 dotenv.config();
@@ -31,6 +32,7 @@ app.use("/api/enquiry", enquiryRouter);
 app.use("/api/coupon", couponRouter);
 app.use("/api/color", colorRouter);
 app.use("/api/cart", cartRouter);
+app.use("/api/order", orderRouter);
 
 app.use(notFound);
 app.use(errorHandler);
