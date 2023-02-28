@@ -15,6 +15,7 @@ import colorRouter from "./routes/colorRouter.js";
 import cartRouter from "./routes/cartRouter.js";
 import orderRouter from "./routes/orderRouter.js";
 import brandRouter from "./routes/brandRouter.js";
+import blogCategoryRouter from "./routes/blogCategoryRoute.js";
 const app = express();
 
 dotenv.config();
@@ -35,6 +36,7 @@ app.use("/api/color", colorRouter);
 app.use("/api/cart", cartRouter);
 app.use("/api/order", orderRouter);
 app.use("/api/brand", brandRouter);
+app.use("/api/blogCategory", blogCategoryRouter);
 
 app.use(notFound);
 app.use(errorHandler);
