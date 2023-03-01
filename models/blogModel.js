@@ -36,7 +36,7 @@ var blogSchema = new mongoose.Schema(
       type: String,
       default: "Admin",
     },
-    images: [],
+    images: [{ url: { type: String }, blurHash: { type: String } }],
   },
   {
     toJSON: {

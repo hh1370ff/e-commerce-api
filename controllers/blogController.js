@@ -13,8 +13,18 @@ export const createBlog = asyncHandler(async (req, res) => {
   if (!title || !description || !category)
     throw new HttpError("All fields are required", 400);
 
+  if (req.files.length === 0)
+    throw new HttpError("Image is required are required", 400);
+
+  const urlsPlusBlur = await Promise.all(
+    req.files.map(async (file) => {
+      const blurHash = await encodeImageToBlurHash(file, 300, 300);
+      const { url } = await cloudinaryUploadImg(file);
+      return { url, blurHash };
+    })
+  );
   // Create and store new blog
-  const newBlog = await Blog.create(req.body);
+  const newBlog = await Blog.create({ ...req.body, images: urlsPlusBlur });
   res.status(201).json({ message: `New newBlog ${newBlog.title} created` });
 });
 

@@ -9,10 +9,13 @@ import {
   updateProduct,
 } from "../controllers/productController.js";
 import { verifyJWT, isAdmin } from "../middleware/verifyJWT.js";
+import upload from "../middleware/uploadImage.js";
 const productRouter = express.Router();
 
 /* admin routes */
-productRouter.route("/createProduct").post(verifyJWT, isAdmin, createProduct);
+productRouter
+  .route("/createProduct")
+  .post(verifyJWT, isAdmin, upload.array("files", 10), createProduct);
 productRouter.route("/updateProduct").put(verifyJWT, isAdmin, updateProduct);
 productRouter.route("/deleteProduct").delete(verifyJWT, isAdmin, deleteProduct);
 

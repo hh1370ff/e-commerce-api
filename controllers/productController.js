@@ -3,6 +3,8 @@ import Product from "../models/productModel.js";
 import User from "../models/userModel.js";
 import sendEmail from "../utils/sendEmail.js";
 import HttpError from "../utils/extendedError.js";
+import { cloudinaryUploadImg } from "../utils/cloudinary.js";
+import encodeImageToBlurHash from "../utils/blurHash.js";
 
 // @desc Create new product
 // @route POST /createProduct
@@ -14,7 +16,18 @@ export const createProduct = asyncHandler(async (req, res) => {
   if (!title || !slug || !description || !price || !brand || !quantity)
     throw new HttpError("All fields are required", 400);
 
-  const productObject = { ...req.body };
+  if (req.files.length === 0)
+    throw new HttpError("Image is required are required", 400);
+
+  const urlsPlusBlur = await Promise.all(
+    req.files.map(async (file) => {
+      const blurHash = await encodeImageToBlurHash(file, 300, 300);
+      const { url } = await cloudinaryUploadImg(file);
+      return { url, blurHash };
+    })
+  );
+
+  const productObject = { ...req.body, images: urlsPlusBlur };
 
   // Create and store new product
   const product = await Product.create(productObject);
