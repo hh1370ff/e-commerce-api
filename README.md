@@ -10,4 +10,4 @@ To use this API, you will need to have Node.js and MongoDB installed on your mac
 
 ```bash 
 git clone https://github.com/hh1370ff/e-commerce-api.git
-```copy
+```
